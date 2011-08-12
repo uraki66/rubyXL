@@ -81,6 +81,71 @@ class Worksheet < PrivateClass
 	  
 	  return table_hash
   end
+  
+  def get_table_with_duplicates(headers=[])
+    validate_workbook
+    
+    if !headers.is_a?(Array)
+      headers = [headers]
+    end
+    
+    row_num = find_first_row_with_content(headers)
+    
+    if row_num.nil?
+      return nil
+    end
+    
+    table_hash = {}
+    table_hash[:table] = []
+    
+    headers.each do |header|
+      row_strings = @sheet_data[row_num].map { |cell| cell.nil? ? '' : cell.value.to_s }
+      header_columns = []
+
+      while hc=row_strings.index(header)
+        header_columns << hc
+        row_strings[hc] = nil
+      end
+
+      table_hash[header.to_sym] = []
+      original_row = row_num + 1
+      current_row = original_row
+      
+      cells = header_columns.map{|hc| @sheet_data[current_row][hc]}
+      table_hash[header.to_sym] = []
+      cells.each_with_index do |cell,index|
+        current_row = original_row
+        table_hash[header.to_sym] << Array.new(cells.size)        
+        while cell && cell.value
+          p cells
+          p cell
+          p index
+          p table_hash
+          p table_hash[header.to_sym]
+          p header_columns
+
+          table_hash[header.to_sym].last[index] = cell.value
+        
+          table_index = current_row - original_row
+        
+          if table_hash[:table][table_index].nil?
+            table_hash[:table][table_index] = Array.new(cells.size)
+            table_hash[:table][table_index].map! {|c| c = {}}
+          end
+          
+          table_hash[:table][table_index][index] = cell.value
+        
+          current_row += 1
+          if @sheet_data[current_row].nil?
+            cell = nil
+          else
+            cell = @sheet_data[current_row][hc]
+          end
+        end
+      end
+    end
+    return table_hash
+  end
 
   #changes color of fill in (zer0 indexed) row
   def change_row_fill(row=0,rgb='ffffff')
