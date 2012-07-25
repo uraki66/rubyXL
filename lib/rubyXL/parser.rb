@@ -307,7 +307,7 @@ module RubyXL
 
     def Parser.decompress(file_path, skip_filename_check = false)
       #ensures it is an xlsx/xlsm file
-      if(file_path =~ /(.+)\.xls(x|m)/)
+      if(file_path =~ /(.+)\.xls(x|m)/i)
         dir_path = $1.to_s
       else
         if skip_filename_check
@@ -328,13 +328,13 @@ module RubyXL
 
       files = Hash.new
 
-      files['app'] = Nokogiri::XML.parse(File.open(File.join(dir_path,'docProps','app.xml'),'r'))
-      files['core'] = Nokogiri::XML.parse(File.open(File.join(dir_path,'docProps','core.xml'),'r'))
+      files['app'] = Nokogiri::XML.parse(File.open(File.join(dir_path,'docProps','app.xml'),'r+'))
+      files['core'] = Nokogiri::XML.parse(File.open(File.join(dir_path,'docProps','core.xml'),'r+'))
 
-      files['workbook'] = Nokogiri::XML.parse(File.open(File.join(dir_path,'xl','workbook.xml'),'r'))
+      files['workbook'] = Nokogiri::XML.parse(File.open(File.join(dir_path,'xl','workbook.xml'),'r+'))
 
       if(File.exist?(File.join(dir_path,'xl','sharedStrings.xml')))
-        files['sharedString'] = Nokogiri::XML.parse(File.open(File.join(dir_path,'xl','sharedStrings.xml'),'r'))
+        files['sharedString'] = Nokogiri::XML.parse(File.open(File.join(dir_path,'xl','sharedStrings.xml'),'r+'))
       end
 
       unless @data_only
@@ -375,7 +375,7 @@ module RubyXL
           dir = Dir.new(printer_path).entries.reject {|f| [".","..",".DS_Store"].include? f}
 
           dir.each_with_index do |print, i|
-            files['printerSettings'][i+1] = File.open(File.join(printer_path,print), 'rb').read
+            files['printerSettings'][i+1] = File.open(File.join(printer_path,print), 'rb+').read
           end
         end
 
@@ -390,10 +390,10 @@ module RubyXL
         end
 
         if File.exist?(File.join(dir_path,'xl','vbaProject.bin'))
-          files['vbaProject'] = File.open(File.join(dir_path,"xl","vbaProject.bin"),'rb').read
+          files['vbaProject'] = File.open(File.join(dir_path,"xl","vbaProject.bin"),'rb+').read
         end
 
-        files['styles'] = Nokogiri::XML.parse(File.open(File.join(dir_path,'xl','styles.xml'),'r'))
+        files['styles'] = Nokogiri::XML.parse(File.open(File.join(dir_path,'xl','styles.xml'),'r+'))
       end
 
       @num_sheets = files['workbook'].css('sheets').children.size
@@ -403,7 +403,7 @@ module RubyXL
       i=1
       1.upto(@num_sheets) do
         filename = 'sheet'+i.to_s
-        files[i] = Nokogiri::XML.parse(File.open(File.join(dir_path,'xl','worksheets',filename+'.xml'),'r'))
+        files[i] = Nokogiri::XML.parse(File.open(File.join(dir_path,'xl','worksheets',filename+'.xml'),'r+'))
         i=i+1
       end
 
